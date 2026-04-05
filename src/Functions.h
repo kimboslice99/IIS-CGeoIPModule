@@ -38,7 +38,7 @@ public:
 
     BOOL IsCountryCodeListed(IN IHttpContext* pHttpContext, IN BSTR CountryCode, IN IAppHostElement* pModuleElement);
 
-    BOOL GetIsEnabled(IN IHttpContext* pW3Context, IN IAppHostElement* pModuleElement);
+    BOOL GetIsEnabled(IN IAppHostElement* pModuleElement);
 
     HRESULT GetSiteId(IN IHttpContext* pHttpContext, OUT PCWSTR* str);
 
@@ -48,11 +48,11 @@ public:
 
     VOID DenyAction(IN IHttpContext* pHttpContext, IN IAppHostElement* pModuleElement);
 
-    BOOL GetAllowMode(IN IHttpContext* pW3Context, IN IAppHostElement* pModuleElement);
+    BOOL GetAllowMode(IN IAppHostElement* pModuleElement);
 
     std::vector<ExceptionRules> exceptionRules(IN IHttpContext* pHttpContext, IN IAppHostElement* pModuleElement);
 
-    LPWSTR charToWString(IN IHttpContext* pHttpContext, IN LPCSTR charArray, IN int length);
+    LPWSTR charToWString(IN IHttpContext* pHttpContext, IN LPCSTR charArray, IN INT length);
 
     LPSTR BSTRToCharArray(IN IHttpContext* pHttpContext, IN BSTR bstr);
 

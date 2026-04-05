@@ -116,13 +116,10 @@ BOOL IPFunctions::IsLocalAddress(PSOCKADDR pSockAddr) {
 
 BOOL IPFunctions::isIpInExceptionRules(PSOCKADDR pSockAddr, const std::vector<ExceptionRules>& rules, BOOL* pAllowed)
 {
-    // at this point we should have our exception rules if any,
-    // so we can loop through each rule and check if the connecting ip is within the range
-
     for (const auto& rule : rules) {
-        LPCSTR family = rule.family.c_str();
-        LPCSTR address = rule.address.c_str();
-        LPCSTR mask = rule.mask.c_str();
+        LPCSTR family = rule.family;
+        LPCSTR address = rule.address;
+        LPCSTR mask = rule.mask;
         *pAllowed = rule.mode;
 
         if (pSockAddr->sa_family == AF_INET) {

@@ -11,6 +11,8 @@
  */
 #include "pch.h"
 #include "GeoFunctions.h"
+HANDLE hWatcherThread = NULL;
+HANDLE hStopEvent = NULL;
 
 /// <summary>
 /// Gets the MMDB path from config, else nullptr
@@ -44,14 +46,24 @@ CHAR* GeoFunctions::GetMMDBPath(IN IHttpContext* pHttpContext, IN IAppHostElemen
     CHAR* path = functions.BSTRToCharArray(pHttpContext, bstr);
     SysFreeString(bstr);
 
-    return path; // Caller must free this memory
+    return path;
 }
 
+/// <summary>
+/// Thread function to watch the MMDB file for changes and set g_reloadNeeded to true if it changes. Exits when hStopEvent is signaled.
+/// </summary>
+/// <param name="lpParam"></param>
+/// <returns></returns>
 static DWORD WINAPI WatchMMDBFile(LPVOID lpParam) {
-    OutputDebugStringA("WatchMMDBFile started");
-
     CHAR filePath[MAX_PATH];
-    strcpy_s(filePath, reinterpret_cast<const char*>(lpParam));
+    strcpy_s(filePath, reinterpret_cast<LPCSTR>(lpParam));
+
+#if _DEBUG
+	CHAR dbgmsg[256];
+	sprintf_s(dbgmsg, sizeof(dbgmsg), "WatchMMDBFile thread started for file: %s", filePath);
+    // BUG: This not writing to file
+	Functions::WriteFileLogMessage(dbgmsg);
+#endif
 
     CHAR dirPath[MAX_PATH];
     strcpy_s(dirPath, filePath);
@@ -66,32 +78,52 @@ static DWORD WINAPI WatchMMDBFile(LPVOID lpParam) {
         FILE_FLAG_BACKUP_SEMANTICS, NULL);
 
     if (hDir == INVALID_HANDLE_VALUE) {
+#if _DEBUG
         DWORD err = GetLastError();
         CHAR msg[256];
         sprintf_s(msg, sizeof(msg), "ERROR: CreateFileA failed! Code: %lu", err);
-        OutputDebugStringA(msg);
+        Functions::WriteFileLogMessage(msg);
+#endif
         return 1;
     }
 
-    char buffer[1024];
+    CHAR buffer[8 * 1024];
     DWORD bytesReturned;
 
     while (true) {
+        DWORD waitResult = WaitForSingleObject(hStopEvent, 0);
+        if (waitResult == WAIT_OBJECT_0) {
+#if _DEBUG
+            Functions::WriteFileLogMessage("Stop event received. Exiting WatchMMDBFile.");
+#endif
+            break;
+        }
         memset(buffer, 0, sizeof(buffer));
-        OutputDebugStringA("Waiting for directory change...");
+
+#if _DEBUG
+		CHAR dbgmsg2[256];
+		sprintf_s(dbgmsg2, sizeof(dbgmsg2), "Waiting for directory change in %s...", dirPath);
+        Functions::WriteFileLogMessage(dbgmsg2);
+#endif
+
         BOOL result = ReadDirectoryChangesW(
             hDir, buffer, sizeof(buffer), FALSE,
-            FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_LAST_WRITE, &bytesReturned, NULL, NULL);
+            FILE_NOTIFY_CHANGE_FILE_NAME |
+            FILE_NOTIFY_CHANGE_LAST_WRITE |
+            FILE_NOTIFY_CHANGE_SIZE, &bytesReturned, NULL, NULL);
 
         if (!result) {
+#if _DEBUG
             DWORD err = GetLastError();
             CHAR msg[256];
             sprintf_s(msg, sizeof(msg), "ERROR: ReadDirectoryChangesW failed! Code: %lu", err);
-            OutputDebugStringA(msg);
+            Functions::WriteFileLogMessage(msg);
+#endif
             continue;
         }
-
-        OutputDebugStringA("File change detected!");
+#if _DEBUG
+        Functions::WriteFileLogMessage("File change detected!");
+#endif
 
         FILE_NOTIFY_INFORMATION* pInfo = (FILE_NOTIFY_INFORMATION*)buffer;
         do {
@@ -102,13 +134,23 @@ static DWORD WINAPI WatchMMDBFile(LPVOID lpParam) {
             CHAR narrowFileName[MAX_PATH];
             WideCharToMultiByte(CP_ACP, 0, wideFileName, -1, narrowFileName, MAX_PATH, NULL, NULL);
 
-            if (strstr(filePath, narrowFileName)) { // Check if it's the file we're watching
-                OutputDebugStringA("Reloading mmdb");
+            const char* watchedFile = strrchr(filePath, '\\');
+            watchedFile = watchedFile ? watchedFile + 1 : filePath;
+
+            if (_stricmp(watchedFile, narrowFileName) == 0)
+            {
+#if _DEBUG
+                Functions::WriteFileLogMessage("Reloading mmdb");
+#endif
                 g_reloadNeeded = true;
             }
+#if _DEBUG
             else {
-                OutputDebugStringA("File change detected, but not the target file.");
+                CHAR msg[256];
+                sprintf_s(msg, sizeof(msg), "Detected change in unrelated file: %s", narrowFileName);
+				Functions::WriteFileLogMessage(msg);
             }
+#endif
 
             if (pInfo->NextEntryOffset == 0) break;
             pInfo = (FILE_NOTIFY_INFORMATION*)((LPBYTE)pInfo + pInfo->NextEntryOffset);
@@ -116,7 +158,36 @@ static DWORD WINAPI WatchMMDBFile(LPVOID lpParam) {
     }
 
     CloseHandle(hDir);
+#if _DEBUG
+	CHAR msg[256];
+	sprintf_s(msg, sizeof(msg), "WatchMMDBFile thread exiting.");
+	Functions::WriteFileLogMessage(msg);
+#endif
     return 0;
+}
+
+VOID GeoFunctions::UnloadMMDB()
+{
+    MMDB_close(&g_mmdb);
+
+    if (hStopEvent) {
+        SetEvent(hStopEvent); // signal thread to exit
+    }
+
+    if (hWatcherThread) {
+        WaitForSingleObject(hWatcherThread, 5000);
+        CloseHandle(hWatcherThread);
+        hWatcherThread = NULL;
+    }
+
+    if (hStopEvent) {
+        CloseHandle(hStopEvent);
+        hStopEvent = NULL;
+    }
+
+#ifdef _DEBUG
+    Functions::WriteFileLogMessage("Successfully cleaned up");
+#endif
 }
 
 HRESULT GeoFunctions::LoadMMDB(IN IHttpContext* pHttpContext, IN IAppHostElement* pModuleElement)
@@ -169,15 +240,14 @@ HRESULT GeoFunctions::LoadMMDB(IN IHttpContext* pHttpContext, IN IAppHostElement
         return E_FAIL;
     }
     CHAR fullTempPath[MAX_PATH];
-    LPCSTR tempFileName = "CGeoIPModule_mmdb_";
 
     _bstr_t bstr(appIdWString);
     LPCSTR appId = bstr;
-    snprintf(fullTempPath, sizeof(fullTempPath), "%s%s%s", tempPath, tempFileName, appId);
+    snprintf(fullTempPath, sizeof(fullTempPath), "%sCGeoIPModule_mmdb_%s", tempPath, appId);
 
     if (CopyFileA(path, fullTempPath, FALSE) == 0) {
 #ifdef _DEBUG
-        char message[256];
+        CHAR message[256];
         sprintf_s(message, sizeof(message), "Failed to copy file to temp folder. %s", fullTempPath);
         myFunctions.WriteFileLogMessage(message);
 #endif
@@ -186,7 +256,7 @@ HRESULT GeoFunctions::LoadMMDB(IN IHttpContext* pHttpContext, IN IAppHostElement
         return E_FAIL;
     }
 
-    int status = MMDB_open(fullTempPath, MMDB_MODE_MMAP, &g_mmdb);
+    INT status = MMDB_open(fullTempPath, MMDB_MODE_MMAP, &g_mmdb);
 
     if (MMDB_SUCCESS != status) {
 #ifdef _DEBUG
@@ -200,8 +270,9 @@ HRESULT GeoFunctions::LoadMMDB(IN IHttpContext* pHttpContext, IN IAppHostElement
         return E_FAIL;
     }
 
-    HANDLE hThread = CreateThread(NULL, 0, WatchMMDBFile, reinterpret_cast<LPVOID>(path), 0, NULL);
-    if (hThread == NULL) {
+    hStopEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+    hWatcherThread = CreateThread(NULL, 0, WatchMMDBFile, reinterpret_cast<LPVOID>(path), 0, NULL);
+    if (hWatcherThread == NULL) {
 #ifdef _DEBUG
         myFunctions.WriteFileLogMessage("CreateThread failed!");
 #endif
@@ -209,7 +280,7 @@ HRESULT GeoFunctions::LoadMMDB(IN IHttpContext* pHttpContext, IN IAppHostElement
     }
 #ifdef _DEBUG
     else {
-        myFunctions.WriteFileLogMessage("WatchMMDBFile thread started successfully.");
+        myFunctions.WriteFileLogMessage("WatchMMDBFile thread handle obtained.");
     }
 #endif
 
@@ -228,7 +299,7 @@ HRESULT GeoFunctions::GetCountryCode(IN PSOCKADDR IP, OUT CHAR* COUNTRYCODE)
     delete[] message;
 #endif
     MMDB_entry_data_s entry_data;
-    int mmdb_error;
+    INT mmdb_error;
     // perform lookup
     MMDB_lookup_result_s result = MMDB_lookup_sockaddr(&g_mmdb, IP, &mmdb_error);
     // check it
@@ -274,8 +345,8 @@ HRESULT GeoFunctions::GetCountryCode(IN PSOCKADDR IP, OUT CHAR* COUNTRYCODE)
 
     // buffer for the country code
     CHAR cc[3];
-    int sprintf_countrycode = 0;
-    int sprintf_debugmessage = 0;
+    INT sprintf_countrycode = 0;
+    INT sprintf_debugmessage = 0;
     sprintf_countrycode = sprintf_s(cc, sizeof(cc), "%.*s", entry_data.data_size, entry_data.utf8_string);
 #ifdef _DEBUG
     CHAR string[16];

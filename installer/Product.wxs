@@ -2,7 +2,7 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
      xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
 
-	<Product Id="*" Name="CGeoIPModule" Language="1033" Manufacturer="kimboslice99" Version="1.0.0.0" UpgradeCode="FECA01B4-96AC-414D-B389-2E210C8A0385">
+	<Product Id="*" Name="CGeoIPModule" Language="1033" Manufacturer="kimboslice99" Version="1.2.0.0" UpgradeCode="FECA01B4-96AC-414D-B389-2E210C8A0385">
 		<Package Description="CGeoIPModule for IIS" InstallerVersion="500" Compressed="yes" InstallScope="perMachine" InstallPrivileges="elevated" />
 		<?if $(sys.BUILDARCH) = x64 ?>
 		<?define Win64 = "yes" ?>
@@ -134,12 +134,12 @@
 			<?endif ?>
 		</InstallExecuteSequence>
 		<?if $(var.Win64) = "yes" ?>
-		<CustomAction Id="InstallModulex64" Execute="deferred" Impersonate="no" Directory="SCHEMADIRECTORY" ExeCommand="&quot;[System64Folder]inetsrv\appcmd.exe&quot; install module /name:&quot;CGeoIPModule&quot; /image:&quot;[APPLICATIONROOTDIRECTORY]CGeoIPModule.dll&quot; /preCondition:&quot;bitness64&quot; /lock:&quot;false&quot;" />
-		<CustomAction Id="InstallModule" Execute="deferred" Impersonate="no" Directory="SCHEMADIRECTORY" ExeCommand="&quot;[SystemFolder]inetsrv\appcmd.exe&quot; install module /name:&quot;CGeoIPModule (32-bit)&quot; /image:&quot;[APPLICATIONROOTDIRECTORY]CGeoIPModulex86.dll&quot; /preCondition:&quot;bitness32&quot; /lock:&quot;false&quot;" />
+		<CustomAction Id="InstallModulex64" Return="ignore" Execute="deferred" Impersonate="no" Directory="SCHEMADIRECTORY" ExeCommand="&quot;[System64Folder]inetsrv\appcmd.exe&quot; install module /name:&quot;CGeoIPModule&quot; /image:&quot;[APPLICATIONROOTDIRECTORY]CGeoIPModule.dll&quot; /preCondition:&quot;bitness64&quot; /lock:&quot;false&quot;" />
+		<CustomAction Id="InstallModule" Return="ignore" Execute="deferred" Impersonate="no" Directory="SCHEMADIRECTORY" ExeCommand="&quot;[SystemFolder]inetsrv\appcmd.exe&quot; install module /name:&quot;CGeoIPModule (32-bit)&quot; /image:&quot;[APPLICATIONROOTDIRECTORY]CGeoIPModulex86.dll&quot; /preCondition:&quot;bitness32&quot; /lock:&quot;false&quot;" />
 		<CustomAction Id="UninstallModulex64" Return="ignore" Execute="deferred" Impersonate="no" Directory="SCHEMADIRECTORY" ExeCommand="&quot;[System64Folder]inetsrv\appcmd.exe&quot; uninstall module /module.name:&quot;CGeoIPModule&quot;" />
 		<CustomAction Id="UninstallModule" Return="ignore" Execute="deferred" Impersonate="no" Directory="SCHEMADIRECTORY" ExeCommand="&quot;[SystemFolder]inetsrv\appcmd.exe&quot; uninstall module /module.name:&quot;CGeoIPModule (32-bit)&quot;" />
 		<?else ?>
-		<CustomAction Id="InstallModule" Execute="deferred" Impersonate="no" Directory="SCHEMADIRECTORY" ExeCommand="&quot;[SystemFolder]inetsrv\appcmd.exe&quot; install module /name:&quot;CGeoIPModule&quot; /image:&quot;[APPLICATIONROOTDIRECTORY]CGeoIPModule.dll&quot; /lock:&quot;false&quot;" />
+		<CustomAction Id="InstallModule" Return="ignore" Execute="deferred" Impersonate="no" Directory="SCHEMADIRECTORY" ExeCommand="&quot;[SystemFolder]inetsrv\appcmd.exe&quot; install module /name:&quot;CGeoIPModule&quot; /image:&quot;[APPLICATIONROOTDIRECTORY]CGeoIPModule.dll&quot; /lock:&quot;false&quot;" />
 		<CustomAction Id="UninstallModule" Return="ignore" Execute="deferred" Impersonate="no" Directory="SCHEMADIRECTORY" ExeCommand="&quot;[SystemFolder]inetsrv\appcmd.exe&quot; uninstall module /module.name:&quot;CGeoIPModule&quot;" />
 		<?endif ?>
 		<Component Id="ModuleConfig" Guid="21A2EDF5-B38C-4CCB-880E-9C01F3CC1D58" Directory="SCHEMADIRECTORY" KeyPath="yes">

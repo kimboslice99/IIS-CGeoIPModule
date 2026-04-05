@@ -31,5 +31,7 @@ public:
 
     HRESULT LoadMMDB(IN IHttpContext* pHttpContext, IN IAppHostElement* pModuleElement);
 
+    VOID UnloadMMDB();
+
     HRESULT GetCountryCode(IN PSOCKADDR IP, OUT CHAR* COUNTRYCODE);
 };

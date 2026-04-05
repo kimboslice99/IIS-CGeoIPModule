@@ -28,18 +28,18 @@
 class IPFunctions
 {
 public:
-    BOOL IsLocalAddress(PSOCKADDR pSockAddr);
+    static BOOL IsLocalAddress(PSOCKADDR pSockAddr);
 
-    BOOL isIpInExceptionRules(PSOCKADDR pSockAddr, const std::vector<ExceptionRules>& rules, BOOL* pAllowed);
+    static BOOL isIpInExceptionRules(PSOCKADDR pSockAddr, const std::vector<ExceptionRules>& rules, BOOL* pAllowed);
 
-    HRESULT GetIpVersion(IN PCSTR ipAddress, OUT INT* pFamily);
+    static HRESULT GetIpVersion(IN PCSTR ipAddress, OUT INT* pFamily);
 
-    HRESULT StringToPSOCK(IN IHttpContext* pHttpContext, IN PCSTR string, IN INT family, OUT PSOCKADDR* ppOutAddr);
+    static HRESULT StringToPSOCK(IN IHttpContext* pHttpContext, IN PCSTR string, IN INT family, OUT PSOCKADDR* ppOutAddr);
 
 private:
-    VOID GenerateIpv6Mask(int prefixLength, struct in6_addr* mask);
+    static VOID GenerateIpv6Mask(int prefixLength, struct in6_addr* mask);
 
-    BOOL IsIpv6InSubnet(struct in6_addr* addr, struct in6_addr* subnet, struct in6_addr* mask);
+    static BOOL IsIpv6InSubnet(struct in6_addr* addr, struct in6_addr* subnet, struct in6_addr* mask);
 
-    BOOL IsIpv4InSubnet(DWORD ip, DWORD subnet, DWORD mask);
+    static BOOL IsIpv4InSubnet(DWORD ip, DWORD subnet, DWORD mask);
 };

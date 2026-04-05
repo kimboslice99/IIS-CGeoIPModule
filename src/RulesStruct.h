@@ -12,19 +12,16 @@
 #ifndef EXCEPTION_RULES
 #define EXCEPTION_RULES
 
-#include <string>
-#include <vector>
-
 struct ExceptionRules {
-    std::string family;
-    std::string address;
-    std::string mask;
-    bool mode;
+    PCSTR family;
+    PCSTR address;
+    PCSTR mask;
+    BOOL mode;
 
     ExceptionRules()
-        : family(""), address(""), mask(""), mode(true) {}
+        : family(""), address(""), mask(""), mode(TRUE) {}
 
-    ExceptionRules(const std::string& fam, const std::string& addr, const std::string& msk, bool mod)
+    ExceptionRules(PCSTR& fam, PCSTR& addr, PCSTR& msk, BOOL mod)
         : family(fam), address(addr), mask(msk), mode(mod) {}
 };
 

@@ -296,13 +296,13 @@ BOOL Functions::CheckCountryCode(IN IHttpContext* pHttpContext, IN CHAR* COUNTRY
         WriteFileLogMessage("mode=allow listed");
     }
 #endif
-    int wslen = MultiByteToWideChar(CP_ACP, 0, COUNTRYCODE, (int)strlen(COUNTRYCODE), 0, 0);
+    INT wslen = MultiByteToWideChar(CP_ACP, 0, COUNTRYCODE, (INT)strlen(COUNTRYCODE), 0, 0);
     BSTR bstrCountryCode = SysAllocStringLen(0, wslen);
-    MultiByteToWideChar(CP_ACP, 0, COUNTRYCODE, (int)strlen(COUNTRYCODE), bstrCountryCode, wslen);
+    MultiByteToWideChar(CP_ACP, 0, COUNTRYCODE, (INT)strlen(COUNTRYCODE), bstrCountryCode, wslen);
 
-    BOOL result = MODE ? FALSE : TRUE;
+    BOOL result = FALSE;
     if (IsCountryCodeListed(pHttpContext, bstrCountryCode, pModuleElement)) {
-        result = MODE ? TRUE : FALSE;
+        result = MODE;
     }
 
     SysFreeString(bstrCountryCode);
@@ -315,7 +315,7 @@ BOOL Functions::CheckCountryCode(IN IHttpContext* pHttpContext, IN CHAR* COUNTRY
 /// </summary>
 /// <param name="pHttpContext"></param>
 /// <returns></returns>
-BOOL Functions::GetAllowMode(IN IHttpContext* pHttpContext, IN IAppHostElement* pModuleElement)
+BOOL Functions::GetAllowMode(IN IAppHostElement* pModuleElement)
 {
     BOOL mode = FALSE;
     BSTR bstrEnabled = SysAllocString(L"allowListed");
@@ -325,7 +325,7 @@ BOOL Functions::GetAllowMode(IN IHttpContext* pHttpContext, IN IAppHostElement* 
     return mode;
 }
 
-BOOL Functions::GetIsEnabled(IN IHttpContext* pHttpContext, IN IAppHostElement* pModuleElement)
+BOOL Functions::GetIsEnabled(IN IAppHostElement* pModuleElement)
 {
     BOOL isEnabled = FALSE;
 
@@ -366,7 +366,7 @@ HRESULT Functions::GetSiteId(IN IHttpContext* pHttpContext, OUT PCWSTR* str) {
     }
 
     size_t appIdLen = wcslen(appId);
-    WCHAR* modifiedAppId = (WCHAR*)pHttpContext->AllocateRequestMemory((appIdLen + 1) * sizeof(WCHAR));
+    LPWSTR modifiedAppId = (LPWSTR)pHttpContext->AllocateRequestMemory((appIdLen + 1) * sizeof(WCHAR));
     if (!modifiedAppId) {
         return E_OUTOFMEMORY;
     }
@@ -405,12 +405,15 @@ BOOL Functions::CheckRemoteAddr(IN IAppHostElement* pModuleElement)
     if (FAILED(hr))
     {
 #ifdef _DEBUG
-        WriteFileLogMessage("[Functions::CheckRemoteAddr]: GetBooleanPropertyValueFromElement failed");
         _com_error err(hr);
         LPCTSTR errMsg = err.ErrorMessage();
-        WriteFileLogMessage(CStringA(errMsg));
+        CHAR message[256];
+        sprintf_s(message, sizeof(message), "[Functions::CheckRemoteAddr]: GetBooleanPropertyValueFromElement failed %s", CStringA(errMsg).GetString());
+        WriteFileLogMessage(message);
 #endif
+        return FALSE;
     }
+
     return checkRemoteAddr;
 }
 
@@ -421,7 +424,7 @@ BOOL Functions::CheckRemoteAddr(IN IAppHostElement* pModuleElement)
 /// <returns></returns>
 VOID Functions::DenyAction(IN IHttpContext* pHttpContext, IN IAppHostElement* pModuleElement)
 {
-    const wchar_t* mode = L"Close";
+    WCHAR mode[13] = L"Close";
 
     if (pModuleElement != NULL) {
         BSTR bstrAction = SysAllocString(L"action");
@@ -433,7 +436,7 @@ VOID Functions::DenyAction(IN IHttpContext* pHttpContext, IN IAppHostElement* pM
 
             if (SUCCEEDED(hr) && modeBstr != NULL)
             {
-                mode = modeBstr; // Use retrieved action
+                wcsncpy_s(mode, ARRAYSIZE(mode), modeBstr, _TRUNCATE);
                 SysFreeString(modeBstr);
             }
 #ifdef _DEBUG
@@ -503,10 +506,11 @@ std::vector<ExceptionRules> Functions::exceptionRules(IN IHttpContext* pHttpCont
 
     if (FAILED(hr) || pAddressElement == NULL) {
 #ifdef _DEBUG
-        WriteFileLogMessage("[Functions::exceptionRules]: GetElementByName failed");
         _com_error err(hr);
         LPCTSTR errMsg = err.ErrorMessage();
-        WriteFileLogMessage(CStringA(errMsg));
+        CHAR message[128];
+        sprintf_s(message, sizeof(message), "[Functions::exceptionRules]: GetElementByName failed %s", CStringA(errMsg).GetString());
+        WriteFileLogMessage(message);
 #endif
         return rules;
     }
@@ -517,10 +521,11 @@ std::vector<ExceptionRules> Functions::exceptionRules(IN IHttpContext* pHttpCont
 
     if (FAILED(hr) || pCollection == NULL) {
 #ifdef _DEBUG
-        WriteFileLogMessage("[Functions::exceptionRules]: get_Collection failed");
         _com_error err(hr);
         LPCTSTR errMsg = err.ErrorMessage();
-        WriteFileLogMessage(CStringA(errMsg));
+        CHAR message[128];
+        sprintf_s(message, sizeof(message), "[Functions::exceptionRules]: get_Collection failed %s", CStringA(errMsg).GetString());
+        WriteFileLogMessage(message);
 #endif
         return rules;
     }
@@ -529,10 +534,11 @@ std::vector<ExceptionRules> Functions::exceptionRules(IN IHttpContext* pHttpCont
     hr = pCollection->get_Count(&count);
     if (FAILED(hr)) {
 #ifdef _DEBUG
-        WriteFileLogMessage("[Functions::exceptionRules]: get_Count failed");
         _com_error err(hr);
         LPCTSTR errMsg = err.ErrorMessage();
-        WriteFileLogMessage(CStringA(errMsg));
+        CHAR message[128];
+        sprintf_s(message, sizeof(message), "[Functions::exceptionRules]: get_Count failed %s", CStringA(errMsg).GetString());
+        WriteFileLogMessage(message);
 #endif
         pCollection->Release();
         return rules;
@@ -548,10 +554,11 @@ std::vector<ExceptionRules> Functions::exceptionRules(IN IHttpContext* pHttpCont
         hr = pCollection->get_Item(varIndex, &pElement);
         if (FAILED(hr) || pElement == NULL) {
 #ifdef _DEBUG
-            WriteFileLogMessage("[Functions::exceptionRules]: get_Item failed");
             _com_error err(hr);
             LPCTSTR errMsg = err.ErrorMessage();
-            WriteFileLogMessage(CStringA(errMsg));
+            CHAR message[128];
+            sprintf_s(message, sizeof(message), "[Functions::exceptionRules]: Get_Item failed %s", CStringA(errMsg).GetString());
+            WriteFileLogMessage(message);
 #endif
             continue;
         }
@@ -560,10 +567,11 @@ std::vector<ExceptionRules> Functions::exceptionRules(IN IHttpContext* pHttpCont
         hr = pElement->get_Name(&bstrElementName);
         if (FAILED(hr) || bstrElementName == NULL) {
 #ifdef _DEBUG
-            WriteFileLogMessage("[Functions::exceptionRules]: get_Name failed");
             _com_error err(hr);
             LPCTSTR errMsg = err.ErrorMessage();
-            WriteFileLogMessage(CStringA(errMsg));
+            CHAR message[128];
+            sprintf_s(message, sizeof(message), "[Functions::exceptionRules]: get_Name failed %s", CStringA(errMsg).GetString());
+            WriteFileLogMessage(message);
 #endif
             pElement->Release();
             continue;
@@ -579,7 +587,7 @@ std::vector<ExceptionRules> Functions::exceptionRules(IN IHttpContext* pHttpCont
 
             if (FAILED(hr) || bstrFamily == NULL) {
 #ifdef _DEBUG
-                char msg[512];
+                CHAR msg[512];
                 _com_error err(hr);
                 LPCTSTR errMsg = err.ErrorMessage();
                 CStringA errMsgA(errMsg);
@@ -590,17 +598,18 @@ std::vector<ExceptionRules> Functions::exceptionRules(IN IHttpContext* pHttpCont
                 continue;
             }
 
-            BOOL b = FALSE;
+            BOOL allowed = FALSE;
             BSTR allow = SysAllocString(L"allow");
-            hr = GetBooleanPropertyValueFromElement(pElement, allow, &b);
+            hr = GetBooleanPropertyValueFromElement(pElement, allow, &allowed);
             SysFreeString(allow);
-            bool boolMode = b;
             if (FAILED(hr)) {
 #ifdef _DEBUG
-                WriteFileLogMessage("[Functions::exceptionRules]: GetBooleanPropertyValueFromElement failed (allow)");
+                CHAR msg[512];
                 _com_error err(hr);
                 LPCTSTR errMsg = err.ErrorMessage();
-                WriteFileLogMessage(CStringA(errMsg));
+                CStringA errMsgA(errMsg);
+                sprintf_s(msg, sizeof(msg), "[Functions::exceptionRules]: GetStringPropertyValueFromElement failed (family) %s", (LPCSTR)errMsgA);
+                WriteFileLogMessage(msg);
 #endif
                 SysFreeString(bstrFamily);
                 pElement->Release();
@@ -644,10 +653,12 @@ std::vector<ExceptionRules> Functions::exceptionRules(IN IHttpContext* pHttpCont
             SysFreeString(bstrMask);
             SysFreeString(bstrAddress);
 
-            rules.push_back({ std::string(pcstrFamily), std::string(pcstrAddress), std::string(pcstrMask), boolMode });
+            rules.push_back({ pcstrFamily, pcstrAddress, pcstrMask, allowed });
+        }
+        else {
+            SysFreeString(bstrElementName);
         }
 
-        SysFreeString(bstrElementName);
         pElement->Release();
     }
 
@@ -655,7 +666,7 @@ std::vector<ExceptionRules> Functions::exceptionRules(IN IHttpContext* pHttpCont
     return rules;
 }
 
-PWSTR Functions::charToWString(IN IHttpContext* pHttpContext, IN LPCSTR pcharArray, IN int length)
+PWSTR Functions::charToWString(IN IHttpContext* pHttpContext, IN LPCSTR pcharArray, IN INT length)
 {
     if (!pHttpContext || !pcharArray || length <= 0) {
         return nullptr;
@@ -697,13 +708,13 @@ LPSTR Functions::PSOCKADDRtoString(IN PSOCKADDR pSockAddr)
 {
     CHAR* string = nullptr;
     if (pSockAddr->sa_family == AF_INET) {
-        char s[INET_ADDRSTRLEN];
+        CHAR s[INET_ADDRSTRLEN];
         inet_ntop(AF_INET, &(((struct sockaddr_in*)pSockAddr)->sin_addr), s, INET_ADDRSTRLEN);
         string = new CHAR[strlen(s) + 1];
         strcpy_s(string, strlen(s) + 1, s);
     }
     else if (pSockAddr->sa_family == AF_INET6) {
-        char s[INET6_ADDRSTRLEN];
+        CHAR s[INET6_ADDRSTRLEN];
         inet_ntop(AF_INET6, &(((struct sockaddr_in6*)pSockAddr)->sin6_addr), s, INET6_ADDRSTRLEN);
         string = new CHAR[strlen(s) + 1];
         strcpy_s(string, strlen(s) + 1, s);
@@ -719,7 +730,7 @@ LPSTR Functions::FormatStringPSOCKADDR(IN LPCSTR message, IN PSOCKADDR pSockAddr
 {
     CHAR* ipstring = PSOCKADDRtoString(pSockAddr);
     size_t len = strlen(message) + strlen(ipstring) + 2; // 1 for space and 1 for null terminator
-    char* result = new char[len];
+    LPSTR result = new CHAR[len];
     sprintf_s(result, len, "%s %s", message, ipstring);
     delete[] ipstring;
     return result;
@@ -733,38 +744,55 @@ LPSTR Functions::FormatStringPSOCKADDR(IN LPCSTR message, IN PSOCKADDR pSockAddr
 
 VOID Functions::WriteFileLogMessage(IN LPCSTR szMsg)
 {
-    OutputDebugStringA(szMsg);
+    CHAR msg[256];
+    sprintf_s(msg, sizeof(msg), "[CGeoIPModule]: %s", szMsg);
+    OutputDebugStringA(msg);
     // Get system drive letter
-    char* sysDrive = nullptr;
+    LPSTR sysDrive = nullptr;
     size_t len = 0;
     if (_dupenv_s(&sysDrive, &len, "SystemDrive") != 0 || sysDrive == nullptr) {
+		OutputDebugStringA("[CGeoIPModule]: [Functions::WriteFileLogMessage] Failed to get SystemDrive environment variable");
         return;
     }
 
-    char path[MAX_PATH] = { 0 };
+    CHAR path[MAX_PATH] = { 0 };
     snprintf(path, sizeof(path), "%s/inetpub/logs/CGeoIPDebugLog/Module.log", sysDrive);
 
     free(sysDrive);
 
     // Open file for writing
-    HANDLE hFile = CreateFileA(path, GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    HANDLE hFile = CreateFileA(
+        path,
+        FILE_APPEND_DATA,
+        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+        NULL,
+        OPEN_ALWAYS,
+        FILE_ATTRIBUTE_NORMAL,
+        NULL
+    );
     if (hFile == INVALID_HANDLE_VALUE) {
+		sprintf_s(msg, sizeof(msg), "[CGeoIPModule]: [Functions::WriteFileLogMessage] Failed to open log file at path: %s", path);
+		OutputDebugStringA(msg);
         return;
     }
 
     // date
     std::time_t currentTime = std::time(nullptr);
-    char buffer[80];
+    CHAR buffer[80];
     std::tm localTime;
     localtime_s(&localTime, &currentTime);
     std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &localTime);
 
     DWORD dwWritten;
     SetFilePointer(hFile, 0, NULL, FILE_END);
-    WriteFile(hFile, buffer, (DWORD)strlen(buffer), &dwWritten, NULL);
-    WriteFile(hFile, " ", 1, &dwWritten, NULL);
-    WriteFile(hFile, szMsg, (DWORD)strlen(szMsg), &dwWritten, NULL);
-    WriteFile(hFile, "\r\n", 2, &dwWritten, NULL);
+    CHAR finalMsg[512];
+
+    sprintf_s(finalMsg, sizeof(finalMsg),
+        "%s %s\r\n",
+        buffer,  // timestamp
+        szMsg
+    );
+    WriteFile(hFile, finalMsg, (DWORD)strlen(finalMsg), &dwWritten, NULL);
     CloseHandle(hFile);
     return;
 }
