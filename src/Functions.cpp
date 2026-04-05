@@ -223,7 +223,7 @@ BOOL Functions::IsCountryCodeListed(IN IHttpContext* pHttpContext, IN BSTR Count
 
         IAppHostElement* pElement = NULL;
         hr = pCollection->get_Item(varIndex, &pElement);
-        VariantClear(&varIndex);
+
         if (FAILED(hr) || pElement == NULL)
         {
 #ifdef _DEBUG
@@ -300,9 +300,9 @@ BOOL Functions::CheckCountryCode(IN IHttpContext* pHttpContext, IN CHAR* COUNTRY
     BSTR bstrCountryCode = SysAllocStringLen(0, wslen);
     MultiByteToWideChar(CP_ACP, 0, COUNTRYCODE, (INT)strlen(COUNTRYCODE), bstrCountryCode, wslen);
 
-    BOOL result = FALSE;
+    BOOL result = MODE ? FALSE : TRUE;
     if (IsCountryCodeListed(pHttpContext, bstrCountryCode, pModuleElement)) {
-        result = MODE;
+        result = MODE ? TRUE : FALSE;
     }
 
     SysFreeString(bstrCountryCode);
