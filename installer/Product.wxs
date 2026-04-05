@@ -2,7 +2,7 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
      xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
 
-	<Product Id="*" Name="CGeoIPModule" Language="1033" Manufacturer="kimboslice99" Version="1.2.0.0" UpgradeCode="FECA01B4-96AC-414D-B389-2E210C8A0385">
+	<Product Id="*" Name="CGeoIPModule" Language="1033" Manufacturer="kimboslice99" Version="1.0.2.0" UpgradeCode="FECA01B4-96AC-414D-B389-2E210C8A0385">
 		<Package Description="CGeoIPModule for IIS" InstallerVersion="500" Compressed="yes" InstallScope="perMachine" InstallPrivileges="elevated" />
 		<?if $(sys.BUILDARCH) = x64 ?>
 		<?define Win64 = "yes" ?>
@@ -45,6 +45,12 @@
 		<Feature Id="MainFeature" Title="Main Feature" Level="1">
 			<ComponentGroupRef Id="ProductComponents" />
 		</Feature>
+
+		<MajorUpgrade
+			AllowDowngrades="no"
+			DowngradeErrorMessage="A newer version of CGeoIPModule is already installed."
+			Schedule="afterInstallInitialize"
+			AllowSameVersionUpgrades="yes" />
 
 	</Product>
 
@@ -93,8 +99,9 @@
 		<DirectoryRef Id="APPLICATIONROOTDIRECTORY">
 		<!-- Component for CGeoIPModule.dll -->
 		<?if $(var.Win64) = "yes" ?>
-			<Component Id="CGeoIPModule" Guid="696E8B09-B421-45A9-B003-771C622D9DD6">
+			<Component Id="CGeoIPModule" Guid="696E8B69-B421-45A9-B003-771C622D9DD6">
 				<File Id="CGeoIPModule.dll" Source="..\src\x64\$(var.Configuration)\CGeoIPModule.dll" KeyPath="yes" Checksum="yes" />
+				<RemoveFile Id="RemoveCGeoIPModule" Name="CGeoIPModule.dll" On="uninstall" />
 			</Component>
 			<Component Id="CGeoIPModulex86" Guid="9D22088F-212C-4951-8A28-A0D91AD4B75B">
 				<File Id="CGeoIPModulex86.dll" Source="..\src\x86\$(var.Configuration)\CGeoIPModule.dll" Name="CGeoIPModulex86.dll" KeyPath="yes" Checksum="yes" />
@@ -126,11 +133,11 @@
 
 	<Fragment>
 		<InstallExecuteSequence>
-			<Custom Action="InstallModule" After="InstallInitialize">NOT Installed AND NOT REMOVE</Custom>
-			<Custom Action="UninstallModule" Before="RemoveFiles">(REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE)</Custom>
+			<Custom Action="InstallModule" After="InstallFiles">NOT Installed AND NOT REMOVE</Custom>
+			<Custom Action="UninstallModule" Before="RemoveFiles">(REMOVE="ALL")</Custom>
 			<?if $(var.Win64) = "yes" ?>
-			<Custom Action="InstallModulex64" After="InstallInitialize">NOT Installed AND NOT REMOVE</Custom>
-			<Custom Action="UninstallModulex64" Before="RemoveFiles">(REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE)</Custom>
+			<Custom Action="InstallModulex64" After="InstallFiles">NOT Installed AND NOT REMOVE</Custom>
+			<Custom Action="UninstallModulex64" Before="RemoveFiles">(REMOVE="ALL")</Custom>
 			<?endif ?>
 		</InstallExecuteSequence>
 		<?if $(var.Win64) = "yes" ?>
