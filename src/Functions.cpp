@@ -24,8 +24,7 @@ HRESULT Functions::GetConfig(IN IHttpContext* pHttpContext, OUT IAppHostElement*
 
     // Get the IAppHostAdminManager instance
     pAdminManager = g_pHttpServer->GetAdminManager();
-    if (pAdminManager == NULL)
-    {
+    if (pAdminManager == NULL) {
         // Admin manager not available, cannot proceed
         return E_UNEXPECTED;
     }
@@ -38,8 +37,7 @@ HRESULT Functions::GetConfig(IN IHttpContext* pHttpContext, OUT IAppHostElement*
     hr = pAdminManager->GetAdminSection(bstrSectionName, bstrConfigPath, &pSessionTrackingElement);
     SysFreeString(bstrConfigPath);
     SysFreeString(bstrSectionName);
-    if (FAILED(hr) || pSessionTrackingElement == NULL)
-    {
+    if (FAILED(hr) || pSessionTrackingElement == NULL) {
         // Failed to retrieve the section, or the section is not found
         return hr;
     }
@@ -70,13 +68,11 @@ HRESULT Functions::GetStringPropertyValueFromElement(IAppHostElement* pElement, 
         pszElementName,
         &pProperty);
 
-    if (FAILED(hr))
-    {
+    if (FAILED(hr)) {
         return hr;
     }
 
-    if (pProperty == NULL)
-    {
+    if (pProperty == NULL) {
         return E_UNEXPECTED;
     }
 
@@ -85,15 +81,13 @@ HRESULT Functions::GetStringPropertyValueFromElement(IAppHostElement* pElement, 
 
     hr = pProperty->get_Value(&vPropertyValue);
 
-    if (FAILED(hr))
-    {
+    if (FAILED(hr)) {
         pProperty->Release();
         return hr;
     }
 
     // Check if the value is a string
-    if (vPropertyValue.vt != VT_BSTR)
-    {
+    if (vPropertyValue.vt != VT_BSTR) {
         VariantClear(&vPropertyValue);
         pProperty->Release();
         return E_FAIL; // Value is not a string
@@ -106,8 +100,7 @@ HRESULT Functions::GetStringPropertyValueFromElement(IAppHostElement* pElement, 
     VariantClear(&vPropertyValue);
     pProperty->Release();
 
-    if (*pStringValue == NULL)
-    {
+    if (*pStringValue == NULL) {
         return E_OUTOFMEMORY; // Memory allocation failed
     }
 
@@ -133,13 +126,11 @@ HRESULT Functions::GetBooleanPropertyValueFromElement(IAppHostElement* pElement,
         pszElementName,
         &pProperty);
 
-    if (FAILED(hr))
-    {
+    if (FAILED(hr)) {
         return hr;
     }
 
-    if (pProperty == NULL)
-    {
+    if (pProperty == NULL) {
         return E_UNEXPECTED;
     }
 
@@ -147,15 +138,13 @@ HRESULT Functions::GetBooleanPropertyValueFromElement(IAppHostElement* pElement,
 
     hr = pProperty->get_Value(&vPropertyValue);
 
-    if (FAILED(hr))
-    {
+    if (FAILED(hr)) {
         VariantClear(&vPropertyValue);
         pProperty->Release();
         return hr;
     }
 
-    if (vPropertyValue.vt != VT_BOOL)
-    {
+    if (vPropertyValue.vt != VT_BOOL) {
         VariantClear(&vPropertyValue);
         pProperty->Release();
         return E_FAIL; // Value is not a bool
@@ -178,8 +167,7 @@ BOOL Functions::IsCountryCodeListed(IN IHttpContext* pHttpContext, IN BSTR Count
     BSTR bstr = SysAllocString(L"countryCodes");
     HRESULT hr = pModuleElement->GetElementByName(bstr, &pCountryCodesElement);
     SysFreeString(bstr);
-    if (FAILED(hr) || pCountryCodesElement == NULL)
-    {
+    if (FAILED(hr) || pCountryCodesElement == NULL) {
 #ifdef _DEBUG
         WriteFileLogMessage("[Functions::IsCountryCodeListed]: GetElementByName failed");
         _com_error err(hr);
@@ -191,8 +179,7 @@ BOOL Functions::IsCountryCodeListed(IN IHttpContext* pHttpContext, IN BSTR Count
     IAppHostElementCollection* pCollection = NULL;
     hr = pCountryCodesElement->get_Collection(&pCollection);
     pCountryCodesElement->Release();
-    if (FAILED(hr) || pCollection == NULL)
-    {
+    if (FAILED(hr) || pCollection == NULL) {
 #ifdef _DEBUG
         WriteFileLogMessage("[Functions::IsCountryCodeListed]: get_Collection failed");
         _com_error err(hr);
@@ -203,8 +190,7 @@ BOOL Functions::IsCountryCodeListed(IN IHttpContext* pHttpContext, IN BSTR Count
 
     DWORD count = 0;
     hr = pCollection->get_Count(&count);
-    if (FAILED(hr))
-    {
+    if (FAILED(hr)) {
 #ifdef _DEBUG
         WriteFileLogMessage("[Functions::IsCountryCodeListed]: get_Count failed");
         _com_error err(hr);
@@ -224,8 +210,7 @@ BOOL Functions::IsCountryCodeListed(IN IHttpContext* pHttpContext, IN BSTR Count
         IAppHostElement* pElement = NULL;
         hr = pCollection->get_Item(varIndex, &pElement);
 
-        if (FAILED(hr) || pElement == NULL)
-        {
+        if (FAILED(hr) || pElement == NULL) {
 #ifdef _DEBUG
             WriteFileLogMessage("[Functions::IsCountryCodeListed]: get_Item failed");
             _com_error err(hr);
@@ -236,8 +221,7 @@ BOOL Functions::IsCountryCodeListed(IN IHttpContext* pHttpContext, IN BSTR Count
 
         BSTR bstrElementName = NULL;
         hr = pElement->get_Name(&bstrElementName);
-        if (FAILED(hr) || bstrElementName == NULL)
-        {
+        if (FAILED(hr) || bstrElementName == NULL) {
 #ifdef _DEBUG
             WriteFileLogMessage("[Functions::IsCountryCodeListed]: get_Name failed");
             _com_error err(hr);
@@ -247,17 +231,14 @@ BOOL Functions::IsCountryCodeListed(IN IHttpContext* pHttpContext, IN BSTR Count
             continue;
         }
 
-        if (_wcsicmp(bstrElementName, L"add") == 0)
-        {
+        if (_wcsicmp(bstrElementName, L"add") == 0) {
             BSTR bstrCountryCode = NULL;
             BSTR bstr = SysAllocString(L"code");
             hr = GetStringPropertyValueFromElement(pElement, bstr, &bstrCountryCode);
             SysFreeString(bstr);
 
-            if (SUCCEEDED(hr) && bstrCountryCode != NULL)
-            {
-                if (wcscmp(CountryCode, bstrCountryCode) == 0)
-                {
+            if (SUCCEEDED(hr) && bstrCountryCode != NULL) {
+                if (wcscmp(CountryCode, bstrCountryCode) == 0) {
 #ifdef _DEBUG
                     WriteFileLogMessage("Found country code in config");
 #endif
@@ -284,15 +265,14 @@ BOOL Functions::IsCountryCodeListed(IN IHttpContext* pHttpContext, IN BSTR Count
 /// </summary>
 /// <param name="pHttpContext">Context</param>
 /// <param name="COUNTRYCODE">The country code of an IP</param>
-/// <param name="MODE">mode switch</param>
-/// <returns></returns>
+/// <param name="MODE">bool - mode switch, true to allow listed</param>
+/// <returns>bool true if allowed</returns>
 BOOL Functions::CheckCountryCode(IN IHttpContext* pHttpContext, IN CHAR* COUNTRYCODE, IN BOOL MODE, IN IAppHostElement* pModuleElement)
 {
 #ifdef _DEBUG
     if (MODE == FALSE) {
         WriteFileLogMessage("mode=block listed");
-    }
-    else {
+    } else {
         WriteFileLogMessage("mode=allow listed");
     }
 #endif
@@ -300,14 +280,10 @@ BOOL Functions::CheckCountryCode(IN IHttpContext* pHttpContext, IN CHAR* COUNTRY
     BSTR bstrCountryCode = SysAllocStringLen(0, wslen);
     MultiByteToWideChar(CP_ACP, 0, COUNTRYCODE, (INT)strlen(COUNTRYCODE), bstrCountryCode, wslen);
 
-    BOOL result = MODE ? FALSE : TRUE;
-    if (IsCountryCodeListed(pHttpContext, bstrCountryCode, pModuleElement)) {
-        result = MODE ? TRUE : FALSE;
-    }
-
+	BOOL isListed = IsCountryCodeListed(pHttpContext, bstrCountryCode, pModuleElement);
     SysFreeString(bstrCountryCode);
 
-    return result;
+    return isListed == MODE;
 }
 
 /// <summary>
@@ -330,15 +306,13 @@ BOOL Functions::GetIsEnabled(IN IAppHostElement* pModuleElement)
     BOOL isEnabled = FALSE;
 
     BSTR bstrEnabled = SysAllocString(L"enabled");
-    if (bstrEnabled == NULL)
-    {
+    if (bstrEnabled == NULL) {
         return FALSE;
     }
 
     HRESULT hr = GetBooleanPropertyValueFromElement(pModuleElement, bstrEnabled, &isEnabled);
     SysFreeString(bstrEnabled);
-    if (FAILED(hr))
-    {
+    if (FAILED(hr)) {
 #ifdef _DEBUG
         WriteFileLogMessage("[Functions::GetIsEnabled]: GetBooleanPropertyValueFromElement failed");
         _com_error err(hr);
@@ -355,13 +329,11 @@ HRESULT Functions::GetSiteId(IN IHttpContext* pHttpContext, OUT PCWSTR* str) {
     }
 
     IHttpApplication* pApp = pHttpContext->GetApplication();
-    if (NULL == pApp)
-    {
+    if (NULL == pApp) {
         return E_FAIL;
     }
     PCWSTR appId = pApp->GetApplicationId();
-    if (NULL == appId)
-    {
+    if (NULL == appId) {
         return E_FAIL;
     }
 
@@ -395,15 +367,13 @@ BOOL Functions::CheckRemoteAddr(IN IAppHostElement* pModuleElement)
     BOOL checkRemoteAddr = FALSE;
 
     BSTR bstrRemoteAddr = SysAllocString(L"remoteAddr");
-    if (bstrRemoteAddr == NULL)
-    {
+    if (bstrRemoteAddr == NULL) {
         return FALSE;
     }
 
     HRESULT hr = GetBooleanPropertyValueFromElement(pModuleElement, bstrRemoteAddr, &checkRemoteAddr);
     SysFreeString(bstrRemoteAddr);
-    if (FAILED(hr))
-    {
+    if (FAILED(hr)) {
 #ifdef _DEBUG
         _com_error err(hr);
         LPCTSTR errMsg = err.ErrorMessage();
@@ -428,20 +398,17 @@ VOID Functions::DenyAction(IN IHttpContext* pHttpContext, IN IAppHostElement* pM
 
     if (pModuleElement != NULL) {
         BSTR bstrAction = SysAllocString(L"action");
-        if (bstrAction != NULL)
-        {
+        if (bstrAction != NULL) {
             BSTR modeBstr = NULL;
             HRESULT hr = GetStringPropertyValueFromElement(pModuleElement, bstrAction, &modeBstr);
             SysFreeString(bstrAction);
 
-            if (SUCCEEDED(hr) && modeBstr != NULL)
-            {
+            if (SUCCEEDED(hr) && modeBstr != NULL) {
                 wcsncpy_s(mode, ARRAYSIZE(mode), modeBstr, _TRUNCATE);
                 SysFreeString(modeBstr);
             }
 #ifdef _DEBUG
-            else
-            {
+            else {
                 WriteFileLogMessage("[Functions::DenyAction]: Failed to retrieve 'action' property");
                 _com_error err(hr);
                 LPCTSTR errMsg = err.ErrorMessage();
@@ -454,41 +421,37 @@ VOID Functions::DenyAction(IN IHttpContext* pHttpContext, IN IAppHostElement* pM
     // Respond based on the mode
     IHttpResponse* pHttpResponse = pHttpContext->GetResponse();
 
-    if (NULL == pHttpResponse)
-    {
+    if (NULL == pHttpResponse) {
         return;
     }
 
-    if (wcscmp(mode, L"Close") == 0)
-    {
+    if (wcscmp(mode, L"Close") == 0) {
         pHttpResponse->CloseConnection();
     }
-    else if (wcscmp(mode, L"NotFound") == 0)
-    {
+    else if (wcscmp(mode, L"NotFound") == 0) {
         pHttpResponse->SetStatus(404, "Not Found");
     }
-    else if (wcscmp(mode, L"Forbidden") == 0)
-    {
+    else if (wcscmp(mode, L"Forbidden") == 0) {
         pHttpResponse->SetStatus(403, "Forbidden");
     }
-    else if (wcscmp(mode, L"Unauthorized") == 0)
-    {
+    else if (wcscmp(mode, L"Unauthorized") == 0) {
         pHttpResponse->SetStatus(401, "Unauthorized");
     }
-    else if (wcscmp(mode, L"Reset") == 0)
-    {
+    else if (wcscmp(mode, L"Reset") == 0) {
         pHttpResponse->ResetConnection();
     }
-    else if (wcscmp(mode, L"Teapot") == 0)
-    {
-        pHttpResponse->SetStatus(418, "I'm a teapot");
+    else if (wcscmp(mode, L"Teapot") == 0) {
+        pHttpResponse->SetStatus(418, "I'm a Teapot");
     }
-    else if (wcscmp(mode, L"Gone") == 0)
-    {
+    else if (wcscmp(mode, L"Gone") == 0) {
         pHttpResponse->SetStatus(410, "Gone");
     }
-    else
-    {
+    else if (wcscmp(mode, L"Enhance") == 0) {
+        pHttpResponse->SetStatus(420, "Enhance Your Calm");
+    }
+    else if (wcscmp(mode, L"Unavailable") == 0) {
+        pHttpResponse->SetStatus(451, "Unavailable For Legal Reasons");
+    } else {
         pHttpResponse->CloseConnection();
 #ifdef _DEBUG
         WriteFileLogMessage("[Functions::DenyAction]: Action not recognized, defaulting to 'Close'");

@@ -2,7 +2,7 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
      xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
 
-	<Product Id="*" Name="CGeoIPModule" Language="1033" Manufacturer="kimboslice99" Version="1.0.2.0" UpgradeCode="FECA01B4-96AC-414D-B389-2E210C8A0385">
+	<Product Id="*" Name="CGeoIPModule" Language="1033" Manufacturer="kimboslice99" Version="1.0.2.1" UpgradeCode="FECA01B4-96AC-414D-B389-2E210C8A0385">
 		<Package Description="CGeoIPModule for IIS" InstallerVersion="500" Compressed="yes" InstallScope="perMachine" InstallPrivileges="elevated" />
 		<?if $(sys.BUILDARCH) = x64 ?>
 		<?define Win64 = "yes" ?>
@@ -208,7 +208,7 @@
 							File="$(var.AdministrationConfigFile)"
 							ElementPath="adminModuleProvider"
 							Name="type"
-							Value="CGeoIPModule.GeoblockModuleProvider, CGeoIPModuleUI, Version=1.0.0.0, Culture=neutral, PublicKeyToken=f8b59b594cc1445d"
+							Value="CGeoIPModule.GeoblockModuleProvider, CGeoIPModuleUI, Version=1.0.2.1, Culture=neutral, PublicKeyToken=f8b59b594cc1445d"
 							Sequence="3" />
 
 			<!-- Remove the module provider config -->

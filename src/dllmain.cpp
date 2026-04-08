@@ -43,10 +43,7 @@ public:
         IHttpRequest* pHttpRequest = pHttpContext->GetRequest();
         PSOCKADDR pSockAddr = pHttpRequest->GetRemoteAddress();
         Functions myFunctions;
-        std::vector<ExceptionRules> rules;
 
-        // get config at start of request, use it through the life of the request.
-        // avoids calling GetConfig repeatedly within functions, 5-10% efficency gain.
         IAppHostElement* pModuleElement = nullptr;
         HRESULT hr = myFunctions.GetConfig(pHttpContext, &pModuleElement);
         if (FAILED(hr)) {
@@ -61,8 +58,7 @@ public:
             return RQ_NOTIFICATION_FINISH_REQUEST;
         }
 
-        if (!myFunctions.GetIsEnabled(pModuleElement))
-        {
+        if (!myFunctions.GetIsEnabled(pModuleElement)) {
 #ifdef _DEBUG
             myFunctions.WriteFileLogMessage("Module disabled");
 #endif
@@ -71,8 +67,7 @@ public:
         }
 
         // Parse REMOTE_ADDR to sockaddr.
-        if (myFunctions.CheckRemoteAddr(pModuleElement))
-        {
+        if (myFunctions.CheckRemoteAddr(pModuleElement)) {
             DWORD val;
             PCWSTR remoteAddr;
             hr = pHttpContext->GetServerVariable("REMOTE_ADDR", &remoteAddr, &val);
@@ -89,7 +84,7 @@ public:
             PCSTR pcstrRemoteAddr = b;
 #ifdef _DEBUG
             CHAR message[128];
-            sprintf_s(message, sizeof(message), "Parsed REMOTE_ADDR %s", pcstrRemoteAddr);
+            sprintf_s(message, sizeof(message), "Parsing REMOTE_ADDR %s", pcstrRemoteAddr);
             myFunctions.WriteFileLogMessage(message);
 #endif
             INT family;
@@ -109,11 +104,9 @@ public:
 
         }
 
-        if (!isInitialized || g_reloadNeeded)
-        {
+        if (!isInitialized || g_reloadNeeded) {
             std::lock_guard<std::shared_mutex> lock(initMutex);
-            if (!isInitialized || g_reloadNeeded)
-            {
+            if (!isInitialized || g_reloadNeeded) {
                 // Load configuration from pHttpContext
                 HRESULT hr = geoFunctions.LoadMMDB(pHttpContext, pModuleElement);
                 if (FAILED(hr)) {
@@ -127,18 +120,16 @@ public:
 
         // check exception rules
         BOOL allowed = FALSE;
+        std::vector<ExceptionRules> rules;
         rules = myFunctions.exceptionRules(pHttpContext, pModuleElement);
-        if (IPFunctions::isIpInExceptionRules(pSockAddr, rules, &allowed))
-        {
-            if (TRUE == allowed)
-            {
+        if (IPFunctions::isIpInExceptionRules(pSockAddr, rules, &allowed)) {
+            if (TRUE == allowed) {
 #ifdef _DEBUG
                 myFunctions.WriteFileLogMessage("IP allowed by exception rule");
 #endif
                 pModuleElement->Release();
                 return RQ_NOTIFICATION_CONTINUE;
-            }
-            else {
+            } else {
 #ifdef _DEBUG
                 myFunctions.WriteFileLogMessage("IP denied by exception rule");
 #endif
@@ -150,8 +141,7 @@ public:
 
         CHAR countryCode[3] = { '\0' }; // Buffer to store the country code (2 characters + null terminator)
 
-        if (IPFunctions::IsLocalAddress(pSockAddr))
-        {
+        if (IPFunctions::IsLocalAddress(pSockAddr)) {
             strcpy_s(countryCode, 3, "ZZ");
         }
 
@@ -159,22 +149,19 @@ public:
         REQUEST_NOTIFICATION_STATUS reqStatus;
 
         // Get country code for this address, if it has not been set
-        if (countryCode[0] == '\0')
-        {
+        if (countryCode[0] == '\0') {
             geoFunctions.GetCountryCode(pSockAddr, countryCode);
         }
         LPCWSTR wCountryCode = myFunctions.charToWString(pHttpContext, countryCode, 3);
         pHttpContext->SetServerVariable("GEOIP_COUNTRY", wCountryCode);
 
         // check the retrieved country code
-        if (myFunctions.CheckCountryCode(pHttpContext, countryCode, mode, pModuleElement))
-        {
+        if (myFunctions.CheckCountryCode(pHttpContext, countryCode, mode, pModuleElement)) {
 #ifdef _DEBUG
             myFunctions.WriteFileLogMessage("CountryCode allowed");
 #endif
             reqStatus = RQ_NOTIFICATION_CONTINUE;
-        }
-        else {
+        } else {
 #ifdef _DEBUG
             myFunctions.WriteFileLogMessage("CountryCode denied");
 #endif
@@ -199,12 +186,9 @@ public:
         UNREFERENCED_PARAMETER(pAllocator);
         CGeoIPModule* pModule = new CGeoIPModule;
 
-        if (!pModule)
-        {
+        if (!pModule) {
             return HRESULT_FROM_WIN32(ERROR_NOT_ENOUGH_MEMORY);
-        }
-        else
-        {
+        } else {
             *ppModule = pModule;
             pModule = NULL;
             return S_OK;

@@ -189,17 +189,14 @@ HRESULT IPFunctions::StringToPSOCK(IN IHttpContext* pHttpContext, IN PCSTR strin
 {
     *ppOutAddr = nullptr;
 
-    if (string == nullptr || pHttpContext == nullptr || ppOutAddr == nullptr)
-    {
+    if (string == nullptr || pHttpContext == nullptr || ppOutAddr == nullptr) {
         return E_INVALIDARG;
     }
 
-    if (family == AF_INET)
-    {
+    if (family == AF_INET) {
         PSOCKADDR pSockAddr = (PSOCKADDR)pHttpContext->AllocateRequestMemory(sizeof(struct sockaddr_in));
 
-        if (pSockAddr == nullptr)
-        {
+        if (pSockAddr == nullptr) {
             return E_OUTOFMEMORY;
         }
 
@@ -209,26 +206,22 @@ HRESULT IPFunctions::StringToPSOCK(IN IHttpContext* pHttpContext, IN PCSTR strin
         ((struct sockaddr_in*)pSockAddr)->sin_family = AF_INET;
 
         // Convert the IP address string into the sockaddr_in structure
-        if (inet_pton(AF_INET, string, &(((struct sockaddr_in*)pSockAddr)->sin_addr)) != 1)
-        {
+        if (inet_pton(AF_INET, string, &(((struct sockaddr_in*)pSockAddr)->sin_addr)) != 1) {
             return E_FAIL;
         }
         *ppOutAddr = pSockAddr;
         return S_OK;
     }
-    else if (family == AF_INET6)
-    {
+    else if (family == AF_INET6) {
         PSOCKADDR pSockAddr = (PSOCKADDR)pHttpContext->AllocateRequestMemory(sizeof(struct sockaddr_in6));
-        if (pSockAddr == nullptr)
-        {
+        if (pSockAddr == nullptr) {
             return E_OUTOFMEMORY;
         }
 
         ZeroMemory(pSockAddr, sizeof(struct sockaddr_in6));
         ((struct sockaddr_in6*)pSockAddr)->sin6_family = AF_INET6;
 
-        if (inet_pton(AF_INET6, string, &(((struct sockaddr_in6*)pSockAddr)->sin6_addr)) != 1)
-        {
+        if (inet_pton(AF_INET6, string, &(((struct sockaddr_in6*)pSockAddr)->sin6_addr)) != 1) {
             return E_FAIL;
         }
         *ppOutAddr = pSockAddr;

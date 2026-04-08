@@ -19,6 +19,7 @@
 #pragma comment(lib, "maxminddb.lib")
 
 extern std::atomic<bool> g_reloadNeeded;
+extern std::atomic<bool> isInitialized;
 extern MMDB_s g_mmdb;
 
 /// <summary>

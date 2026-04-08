@@ -144,34 +144,26 @@ namespace CGeoIPModule
             this.comboBoxDenyAction.Left = 5;
             this.comboBoxDenyAction.Top = 80;
             this.comboBoxDenyAction.Name = "comboBoxDenyAction";
-            ComboboxItem item1 = new ComboboxItem();
-            item1.Text = "Unauthorized";
-            item1.Value ="Unauthorized";
-            this.comboBoxDenyAction.Items.Add(item1);
-            ComboboxItem item2 = new ComboboxItem();
-            item2.Text = "Forbidden";
-            item2.Value = "Forbidden";
-            this.comboBoxDenyAction.Items.Add(item2);
-            ComboboxItem item3 = new ComboboxItem();
-            item3.Text = "Not Found";
-            item3.Value = "NotFound";
-            this.comboBoxDenyAction.Items.Add(item3);
-            ComboboxItem item4 = new ComboboxItem();
-            item4.Text = "Reset";
-            item4.Value = "Reset";
-            this.comboBoxDenyAction.Items.Add(item4);
-            ComboboxItem item5 = new ComboboxItem();
-            item5.Text = "Close";
-            item5.Value = "Close";
-            this.comboBoxDenyAction.Items.Add(item5);
-            ComboboxItem item6 = new ComboboxItem();
-            item6.Text = "I'm a teapot";
-            item6.Value = "Teapot";
-            this.comboBoxDenyAction.Items.Add(item6);
-            ComboboxItem item8 = new ComboboxItem();
-            item8.Text = "Gone";
-            item8.Value = "Gone";
-            this.comboBoxDenyAction.Items.Add(item8);
+            var items = new[]
+            {
+                new { Text = "Unauthorized", Value = "Unauthorized" },
+                new { Text = "Forbidden", Value = "Forbidden" },
+                new { Text = "Not Found", Value = "NotFound" },
+                new { Text = "Reset", Value = "Reset" },
+                new { Text = "Close", Value = "Close" },
+                new { Text = "I'm a teapot", Value = "Teapot" },
+                new { Text = "Gone", Value = "Gone" },
+                new { Text = "Enhance your calm", Value = "Enhance" },
+                new { Text = "Unavailable", Value = "Unavailable" }
+            };
+
+            foreach (var it in items)
+            {
+                var item = new ComboboxItem();
+                item.Text = it.Text;
+                item.Value = it.Value;
+                comboBoxDenyAction.Items.Add(item);
+            }
             this.comboBoxDenyAction.SelectedIndex = 0;
             this.comboBoxDenyAction.SelectedIndexChanged += new EventHandler(comboBoxDenyAction_SelectedIndexChanged);
 
