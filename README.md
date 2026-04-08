@@ -4,7 +4,8 @@
  Response options include
  - Close Connection (Politely close the connection without sending a response) *
  - Reset Connection (Hang up rudely without sending a response) *  
- _* These options are connection level, HTTP clients will see this as an error_
+ _* These options are connection level, HTTP clients will see this as an error.  
+ This is the least expensive type of denial, however_
  - Not Found (404)
  - Forbidden (403)
  - Unauthorized (401)
@@ -19,8 +20,10 @@ Grab the latest installer from the releases page
 
 Server variable `GEOIP_COUNTRY` will contain the iso country code on successful lookup, `ZZ` for local addresses as defined by the `IsLocalAddress()` function or `--` for unsuccessful lookups
 
-Configuration page  
-<img src="https://github.com/kimboslice99/IIS-CGeoIPModule/blob/dev/cgeoipmodule-ui.png" width="240">
+<figure>
+  <figcaption>Configuration page</figcaption>
+  <img alt="Configuration page" src="https://github.com/kimboslice99/IIS-CGeoIPModule/blob/dev/cgeoipmodule-ui.png" width="240">
+</figure>
 
 ## Bombardier results
 1.39 KB static file for testing (small to emphasize transactional throughput)
