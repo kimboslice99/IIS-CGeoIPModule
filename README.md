@@ -19,8 +19,8 @@ Grab the latest installer from the releases page
 
 Server variable `GEOIP_COUNTRY` will contain the iso country code on successful lookup, `ZZ` for local addresses as defined by the `IsLocalAddress()` function or `--` for unsuccessful lookups
 
-Configuration page
-![image](/cgeoipmodule-ui.png)
+Configuration page  
+<img src="https://github.com/kimboslice99/IIS-CGeoIPModule/blob/dev/cgeoipmodule-ui.png" width="240">
 
 ## Bombardier results
 1.39 KB static file for testing (small to emphasize transactional throughput)
