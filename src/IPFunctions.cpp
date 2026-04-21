@@ -117,12 +117,12 @@ BOOL IPFunctions::IsLocalAddress(PSOCKADDR pSockAddr) {
 BOOL IPFunctions::isIpInExceptionRules(PSOCKADDR pSockAddr, const std::vector<ExceptionRules>& rules, BOOL* pAllowed)
 {
     for (const auto& rule : rules) {
-        LPCSTR family = rule.family;
-        LPCSTR address = rule.address;
-        LPCSTR mask = rule.mask;
+        PCSTR family = rule.family;
+        PCSTR address = rule.address;
+        PCSTR mask = rule.mask;
         *pAllowed = rule.mode;
 
-        if (pSockAddr->sa_family == AF_INET) {
+        if (pSockAddr->sa_family == AF_INET && strcmp(family, "ipv4") == 0) {
             SOCKADDR_IN* sockaddr_in = (struct sockaddr_in*)pSockAddr;
             DWORD clientIp = sockaddr_in->sin_addr.S_un.S_addr;
 
@@ -138,7 +138,7 @@ BOOL IPFunctions::isIpInExceptionRules(PSOCKADDR pSockAddr, const std::vector<Ex
             }
         }
 
-        if (pSockAddr->sa_family == AF_INET6) {
+        if (pSockAddr->sa_family == AF_INET6 && strcmp(family, "ipv6") == 0) {
             // Convert mask string to an integer
             int maskInt = 0;
             std::exception e;
